@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TS Video Segment Downloader</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+      }
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      input[type="text"]:focus,
+      input[type="number"]:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+      .row {
+        display: flex;
+        gap: 15px;
+      }
+      .col {
+        flex: 1;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+        margin-top: 10px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+      .status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 5px;
+        display: none;
+      }
+      .status.success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+      .status.error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+      .status.info {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+      }
+      .progress {
+        margin-top: 15px;
+        display: none;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+      }
+      .progress-fill {
+        height: 100%;
+        background-color: #4caf50;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+      .progress-text-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+        font-size: 12px;
+        font-weight: bold;
+        text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.8);
+      }
+      .files-section {
+        margin-top: 30px;
+      }
+      .file-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+      }
+      .file-info {
+        flex-grow: 1;
+      }
+      .file-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .btn-small {
+        padding: 5px 10px;
+        font-size: 12px;
+        width: auto;
+        margin: 0;
+      }
+      .btn-download {
+        background-color: #007bff;
+      }
+      .btn-download:hover {
+        background-color: #0056b3;
+      }
+      .btn-delete {
+        background-color: #dc3545;
+      }
+      .btn-delete:hover {
+        background-color: #c82333;
+      }
+      .example {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        font-family: monospace;
+        font-size: 14px;
+      }
+      .note {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .nav-links {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
+      .nav-links a {
+        color: #007bff;
+        text-decoration: none;
+        margin: 0 15px;
+        padding: 8px 16px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+      .nav-links a:hover {
+        background-color: #e3f2fd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎬 TS Video Segment Downloader</h1>
+
+      <div class="nav-links">
+        <a href="/" style="font-weight: bold">🔗 Segment Downloader</a>
+        <a href="/m3u8">📋 M3U8 Downloader</a>
+        <a href="/youtube">📺 YouTube Downloader</a>
+        <a href="/files">📁 File Manager</a>
+      </div>
+
+      <div class="note">
+        <strong>📝 How to use:</strong> Replace the segment number in your URL
+        with <code>{n}</code> placeholder. For example:
+        <code>https://example.com/seg-{n}-v1-a1.ts</code>
+      </div>
+
+      <form id="downloadForm">
+        <div class="form-group">
+          <label for="baseUrl"
+            >Base URL Pattern (use {n} for segment number):</label
+          >
+          <input
+            type="text"
+            id="baseUrl"
+            name="baseUrl"
+            required
+            placeholder="https://example.com/seg-{n}-v1-a1.ts"
+          />
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <div class="form-group">
+              <label for="start">Start Segment:</label>
+              <input
+                type="number"
+                id="start"
+                name="start"
+                placeholder="1"
+                required
+              />
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label for="end">End Segment:</label>
+              <input
+                type="number"
+                id="end"
+                name="end"
+                placeholder="10"
+                required
+              />
+            </div>
+          </div>
+          <div class="col">
+            <div class="form-group">
+              <label for="concurrency">Concurrent Downloads:</label>
+              <input
+                type="number"
+                id="concurrency"
+                name="concurrency"
+                min="1"
+                max="20"
+                value="5"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="downloadBtn">
+          🚀 Start Download & Merge
+        </button>
+      </form>
+
+      <div class="progress" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+          <div class="progress-text-overlay" id="progressPercentage">0%</div>
+        </div>
+        <div
+          id="progressText"
+          style="text-align: center; margin-top: 10px"
+        ></div>
+      </div>
+
+      <div class="status" id="statusMessage"></div>
+    </div>
+
+    <div class="container">
+      <div class="files-section">
+        <h2>📁 Downloaded Files</h2>
+        <button
+          onclick="loadFiles()"
+          class="btn-small"
+          style="margin-bottom: 15px"
+        >
+          🔄 Refresh
+        </button>
+        <div id="filesList"></div>
+      </div>
+    </div>
+
+    <script>
+      let eventSource = null;
+      let currentSessionId = null;
+
+      document
+        .getElementById("downloadForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(e.target);
+          const params = new URLSearchParams();
+
+          for (let [key, value] of formData.entries()) {
+            params.append(key, value);
+          }
+
+          const baseUrl = formData.get("baseUrl");
+          if (!baseUrl.includes("{n}")) {
+            showStatus(
+              "error",
+              "Base URL must contain {n} placeholder for segment numbers"
+            );
+            return;
+          }
+
+          const start = parseInt(formData.get("start"));
+          const end = parseInt(formData.get("end"));
+
+          if (start > end) {
+            showStatus(
+              "error",
+              "Start segment must be less than or equal to end segment"
+            );
+            return;
+          }
+
+          // Generate unique session ID
+          currentSessionId =
+            Date.now().toString() + Math.random().toString(36).substr(2, 9);
+          params.append("sessionId", currentSessionId);
+
+          startDownload();
+          connectToProgressStream(currentSessionId);
+
+          try {
+            const response = await fetch(
+              `/download-segments?${params.toString()}`
+            );
+            const result = await response.json();
+
+            // The progress stream will handle the completion
+            // but we can still check the final result here
+            console.log("Download request completed:", result);
+          } catch (error) {
+            stopDownload();
+            showStatus("error", `❌ Network error: ${error.message}`);
+          }
+        });
+
+      function connectToProgressStream(sessionId) {
+        // Close existing connection if any
+        if (eventSource) {
+          eventSource.close();
+        }
+
+        // Create new EventSource connection
+        eventSource = new EventSource(`/progress/${sessionId}`);
+
+        eventSource.onmessage = function (event) {
+          try {
+            const data = JSON.parse(event.data);
+            handleProgressUpdate(data);
+          } catch (error) {
+            console.error("Error parsing progress data:", error);
+          }
+        };
+
+        eventSource.onerror = function (event) {
+          console.error("EventSource error:", event);
+          if (eventSource.readyState === EventSource.CLOSED) {
+            console.log("Progress stream closed");
+          }
+        };
+
+        eventSource.onopen = function (event) {
+          console.log("Progress stream connected");
+        };
+      }
+
+      function handleProgressUpdate(data) {
+        console.log("Progress update:", data);
+
+        switch (data.type) {
+          case "connected":
+            console.log("Connected to progress stream");
+            break;
+
+          case "starting":
+            updateProgress(0, data.message);
+            break;
+
+          case "downloading":
+            const percentage = data.percentage || 0;
+            updateProgress(percentage, data.message);
+            break;
+
+          case "merging":
+            updateProgress(100, data.message);
+            break;
+
+          case "completed":
+            stopDownload();
+            showStatus(
+              "success",
+              `✅ Download completed successfully!<br>
+               📁 File: ${data.fileSizeMB} MB<br>
+               📊 Segments: ${data.completed}/${data.total}<br>
+               💾 Saved as: ${data.filename}<br>
+               <a href="/${data.filename}" target="_blank" style="color: #007bff; text-decoration: underline;">📥 Download File</a>`
+            );
+            loadFiles(); // Refresh file list
+            break;
+
+          case "error":
+            stopDownload();
+            showStatus("error", `❌ Download failed: ${data.message}`);
+            break;
+
+          default:
+            console.log("Unknown progress type:", data.type);
+        }
+      }
+
+      function startDownload() {
+        document.getElementById("downloadBtn").disabled = true;
+        document.getElementById("downloadBtn").textContent =
+          "⏳ Downloading...";
+        document.getElementById("progressContainer").style.display = "block";
+        document.getElementById("statusMessage").style.display = "none";
+        updateProgress(0, "Initializing...");
+      }
+
+      function stopDownload() {
+        document.getElementById("downloadBtn").disabled = false;
+        document.getElementById("downloadBtn").textContent =
+          "🚀 Start Download & Merge";
+
+        // Close progress stream
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        currentSessionId = null;
+      }
+
+      function updateProgress(percent, text) {
+        const progressFill = document.getElementById("progressFill");
+        const progressPercentage =
+          document.getElementById("progressPercentage");
+        const progressText = document.getElementById("progressText");
+
+        // Ensure percent is between 0 and 100
+        percent = Math.max(0, Math.min(100, percent));
+
+        progressFill.style.width = percent + "%";
+        progressPercentage.textContent = Math.round(percent) + "%";
+        progressText.textContent = text || "";
+
+        // Change color based on progress
+        if (percent === 100) {
+          progressFill.style.backgroundColor = "#28a745"; // Green for complete
+        } else if (percent > 0) {
+          progressFill.style.backgroundColor = "#4CAF50"; // Default green
+        }
+      }
+
+      function showStatus(type, message) {
+        const statusEl = document.getElementById("statusMessage");
+        statusEl.className = `status ${type}`;
+        statusEl.innerHTML = message;
+        statusEl.style.display = "block";
+      }
+
+      async function loadFiles() {
+        try {
+          const response = await fetch("/files");
+          const result = await response.json();
+
+          const filesList = document.getElementById("filesList");
+
+          if (result.success && result.files.length > 0) {
+            filesList.innerHTML = result.files
+              .map(
+                (file) => `
+                        <div class="file-item">
+                            <div class="file-info">
+                                <strong>${file.name}</strong><br>
+                                <small>Size: ${
+                                  file.sizeMB
+                                } MB | Created: ${new Date(
+                  file.created
+                ).toLocaleString()}</small>
+                            </div>
+                            <div class="file-actions">
+                                <button class="btn-small btn-download" onclick="window.open('${
+                                  file.downloadUrl
+                                }', '_blank')">
+                                    📥 Download
+                                </button>
+                                <button class="btn-small btn-delete" onclick="deleteFile('${
+                                  file.name
+                                }')">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        </div>
+                    `
+              )
+              .join("");
+          } else {
+            filesList.innerHTML =
+              '<p style="text-align: center; color: #666;">No files downloaded yet</p>';
+          }
+        } catch (error) {
+          console.error("Error loading files:", error);
+        }
+      }
+
+      async function deleteFile(filename) {
+        if (!confirm(`Are you sure you want to delete ${filename}?`)) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/files/${filename}`, {
+            method: "DELETE",
+          });
+          const result = await response.json();
+
+          if (result.success) {
+            loadFiles(); // Refresh the list
+            showStatus("success", `File ${filename} deleted successfully`);
+          } else {
+            showStatus("error", `Failed to delete file: ${result.error}`);
+          }
+        } catch (error) {
+          showStatus("error", `Network error: ${error.message}`);
+        }
+      }
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", function () {
+        if (eventSource) {
+          eventSource.close();
+        }
+      });
+
+      // Load files on page load
+      loadFiles();
+    </script>
+  </body>
+</html>

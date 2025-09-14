@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Manager - TS Video Downloader</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        min-height: 100vh;
+        color: #333;
+      }
+
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 2.5em;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+      }
+
+      .nav-links {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
+
+      .nav-links a {
+        color: #007bff;
+        text-decoration: none;
+        margin: 0 15px;
+        padding: 8px 16px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+
+      .nav-links a:hover {
+        background-color: #e3f2fd;
+      }
+
+      .refresh-btn {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+      }
+
+      .refresh-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(116, 185, 255, 0.4);
+      }
+
+      .files-container {
+        margin-top: 20px;
+      }
+
+      .file-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+      }
+
+      .file-item:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .file-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .file-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 16px;
+        word-break: break-all;
+      }
+
+      .file-size {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .file-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+
+      .file-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .btn-download {
+        background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+        color: white;
+      }
+
+      .btn-download:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 184, 148, 0.4);
+      }
+
+      .btn-delete {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        color: white;
+      }
+
+      .btn-delete:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(255, 107, 107, 0.4);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+      }
+
+      .empty-state h3 {
+        margin-bottom: 15px;
+        color: #333;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+
+      .error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .file-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .file-meta {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 5px;
+        }
+
+        .file-actions {
+          justify-content: stretch;
+        }
+
+        .btn {
+          flex: 1;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📁 File Manager</h1>
+      <div class="subtitle">Manage your downloaded video files</div>
+
+      <div class="nav-links">
+        <a href="/">🔗 Segment Downloader</a>
+        <a href="/m3u8">📋 M3U8 Downloader</a>
+        <a href="/youtube">📺 YouTube Downloader</a>
+        <a href="/files" style="font-weight: bold">📁 File Manager</a>
+      </div>
+      <button class="refresh-btn" onclick="loadFiles()">
+        🔄 Refresh Files
+      </button>
+
+      <div id="filesContainer" class="files-container">
+        <div class="loading">🔄 Loading files...</div>
+      </div>
+    </div>
+
+    <script>
+      let files = [];
+
+      // Load files on page load
+      document.addEventListener("DOMContentLoaded", loadFiles);
+
+      async function loadFiles() {
+        const container = document.getElementById("filesContainer");
+        container.innerHTML = '<div class="loading">🔄 Loading files...</div>';
+
+        try {
+          const response = await fetch("/files");
+          const data = await response.json();
+
+          if (!data.success) {
+            throw new Error(data.error || "Failed to load files");
+          }
+
+          files = data.files || [];
+          renderFiles();
+        } catch (error) {
+          container.innerHTML = `
+                    <div class="error">
+                        <strong>Error loading files:</strong> ${error.message}
+                    </div>
+                `;
+        }
+      }
+
+      function renderFiles() {
+        const container = document.getElementById("filesContainer");
+
+        if (files.length === 0) {
+          container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📂 No files found</h3>
+                        <p>Start downloading some video segments to see them here!</p>
+                        <p>Use the <a href="/">Segment Downloader</a> or <a href="/m3u8">M3U8 Downloader</a> to create files.</p>
+                    </div>
+                `;
+          return;
+        }
+
+        const filesHtml = files
+          .map((file) => {
+            const createdDate = new Date(file.created).toLocaleString();
+            return `
+                    <div class="file-item">
+                        <div class="file-header">
+                            <div class="file-name">📹 ${file.name}</div>
+                            <div class="file-size">${file.sizeMB} MB</div>
+                        </div>
+                        <div class="file-meta">
+                            <span>📅 Created: ${createdDate}</span>
+                            <span>💾 Size: ${formatBytes(file.size)}</span>
+                        </div>
+                        <div class="file-actions">
+                            <a href="${file.downloadUrl}" 
+                               download="${file.name}"
+                               class="btn btn-download">
+                                📥 Download
+                            </a>
+                            <button onclick="deleteFile('${file.name}')" 
+                                    class="btn btn-delete">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+
+        container.innerHTML = filesHtml;
+      }
+
+      async function deleteFile(filename) {
+        if (!confirm(`Are you sure you want to delete "${filename}"?`)) {
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `/files/${encodeURIComponent(filename)}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          const data = await response.json();
+
+          if (!data.success) {
+            throw new Error(data.error || "Failed to delete file");
+          }
+
+          // Remove file from local array and re-render
+          files = files.filter((file) => file.name !== filename);
+          renderFiles();
+
+          // Show success message briefly
+          showMessage(`File "${filename}" deleted successfully`, "success");
+        } catch (error) {
+          showMessage(`Error deleting file: ${error.message}`, "error");
+        }
+      }
+
+      function formatBytes(bytes) {
+        if (bytes === 0) return "0 Bytes";
+
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      }
+
+      function showMessage(message, type = "info") {
+        // Create and show a temporary message
+        const messageDiv = document.createElement("div");
+        messageDiv.className = type === "error" ? "error" : "empty-state";
+        messageDiv.style.position = "fixed";
+        messageDiv.style.top = "20px";
+        messageDiv.style.right = "20px";
+        messageDiv.style.padding = "15px 20px";
+        messageDiv.style.borderRadius = "8px";
+        messageDiv.style.zIndex = "1000";
+        messageDiv.style.maxWidth = "400px";
+        messageDiv.style.boxShadow = "0 5px 15px rgba(0, 0, 0, 0.2)";
+
+        if (type === "success") {
+          messageDiv.style.background = "#d4edda";
+          messageDiv.style.border = "1px solid #c3e6cb";
+          messageDiv.style.color = "#155724";
+        }
+
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+          document.body.removeChild(messageDiv);
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>
